@@ -1,6 +1,6 @@
 {
   "name": "rollup-plugin-globsync",
-  "version": "0.0.0",
+  "version": "1.0.0",
   "description": "Rollup plugin to copy globs & watch for changes",
   "main": "index.js",
   "scripts": {
