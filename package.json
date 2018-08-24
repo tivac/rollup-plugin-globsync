@@ -1,0 +1,30 @@
+{
+  "name": "rollup-plugin-globsync",
+  "version": "1.0.0",
+  "description": "Rollup plugin to copy globs & watch for changes",
+  "main": "index.js",
+  "scripts": {
+    "test": "jest"
+  },
+  "keywords": [
+    "rollup",
+    "rollup-plugin",
+    "glob",
+    "sync"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "cheap-watch": "^0.3.0",
+    "cp-file": "^6.0.0",
+    "del": "^3.0.0",
+    "globby": "^8.0.1",
+    "multimatch": "^2.1.0"
+  },
+  "devDependencies": {
+    "@tivac/eslint-config": "^2.2.1",
+    "eslint": "^5.4.0",
+    "jest": "^23.5.0",
+    "npmlog": "^4.1.2"
+  }
+}
