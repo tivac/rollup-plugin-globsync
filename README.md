@@ -78,7 +78,7 @@ Define the base dir to watch from. Defaults to `process.cwd()`.
 
 ### `options.clean`
 
-Whether or not to remove all files within `dir` when rollup starts up. Defaults to `true`.
+Whether or not to remove all files within `dist` when rollup starts up. Defaults to `true`.
 
 ### `options.transform`
 
