@@ -6,6 +6,7 @@ const match = require("multimatch");
 const globby = require("globby");
 const cp = require("cp-file");
 const del = require("del");
+const marky = require("marky");
 
 const CheapWatch = require("cheap-watch");
 
@@ -25,6 +26,8 @@ module.exports = ({ patterns = [], dest = "./dist", options = false }) => {
     const watch = Boolean(process.env.ROLLUP_WATCH);
 
     let runs = 0;
+
+    marky.mark("generating globs");
 
     const globs = [
         // The worst dir for a watcher to walk, yikes
@@ -47,6 +50,7 @@ module.exports = ({ patterns = [], dest = "./dist", options = false }) => {
     ];
 
     log.silly("config", JSON.stringify(globs));
+    log.silly("config", `Generating globs took ${marky.stop("generating globs").duration}ms`);
 
     return {
         name : "globsync",
@@ -60,18 +64,36 @@ module.exports = ({ patterns = [], dest = "./dist", options = false }) => {
             
             if(clean) {
                 log.verbose("clean", `Cleaning ${dest}...`);
+                marky.mark("cleaning");
 
                 del.sync(dest);
+
+                log.silly("clean", `Cleaning destination took ${marky.stop("cleaning").duration}ms`);
             }
             
             log.silly("collect", `Collecting files...`);
+
+            marky.mark("collecting");
 
             // Use globby to walk the FS and find all files matching globs
             // for use in cheap-watch's filter function since it'll need to know
             // to iterate intermediate directories and glob matchers aren't good at that bit
             const files = globby.sync(globs, { cwd : dir });
-            
-            log.silly("collect", "Done collecting files");
+
+            log.silly("collect", `Done collecting files in ${marky.stop("collecting").duration}ms`);
+
+            // Don't want to make rollup wait on this, so wrapped in an async IIFE
+            (async function() {
+                log.silly("copy", "Initial copy starting...");
+
+                marky.mark("copying");
+
+                await files.forEach((file) => cp(file, path.join(dest, transform(file))));
+
+                log.silly("copy", `Initial copy complete in ${marky.stop("copying").duration}ms`);
+            }());
+
+            marky.mark("watcher init");
 
             const watcher = new CheapWatch({
                 dir,
@@ -92,13 +114,14 @@ module.exports = ({ patterns = [], dest = "./dist", options = false }) => {
                     return match([ name ], globs).length > 0;
                 },
             });
-            
 
             // Don't want to make rollup wait on this, so wrapped in an async IIFE
             (async function() {
                 await watcher.init();
 
                 booting = false;
+
+                log.silly("watch", `Initialized watcher in ${marky.stop("watcher init").duration}ms`);
 
                 if(watch) {
                     log.info("watch", "Watching for changes to copy...");
@@ -107,15 +130,6 @@ module.exports = ({ patterns = [], dest = "./dist", options = false }) => {
                 }
             }());
             
-            log.silly("copy", "Initial copy starting...");
-
-            // Don't want to make rollup wait on this, so wrapped in an async IIFE
-            (async function() {
-                await files.forEach((file) => cp(file, path.join(dest, transform(file))));
-
-                log.silly("copy", "Initial copy complete");
-            }());
-
             // Added or changed files/dirs
             watcher.on("+", ({ path : item, stats }) => {
                 // Never want to copy just a directory, cp-file will create
