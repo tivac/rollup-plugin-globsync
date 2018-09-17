@@ -7,10 +7,14 @@ const globby = require("globby");
 const cp = require("cp-file");
 const del = require("del");
 const marky = require("marky");
+const pretty = require("pretty-ms");
 
 const CheapWatch = require("cheap-watch");
 
 const log = require("npmlog");
+
+// Wrapper around pretty-ms and marky.stop
+const stop = (name) => pretty(marky.stop(name).duration);
 
 module.exports = ({ patterns = [], dest = "./dist", options = false }) => {
     const {
@@ -49,8 +53,8 @@ module.exports = ({ patterns = [], dest = "./dist", options = false }) => {
         `!./${path.relative(dir, dest)}/**`,
     ];
 
-    log.silly("config", JSON.stringify(globs));
-    log.silly("config", `Generating globs took ${marky.stop("generating globs").duration}ms`);
+    log.silly("config", `Globs:\n${JSON.stringify(globs, null, 4)}`);
+    log.silly("config", `Generating globs took ${stop("generating globs")}`);
 
     return {
         name : "globsync",
@@ -60,6 +64,11 @@ module.exports = ({ patterns = [], dest = "./dist", options = false }) => {
                 return;
             }
 
+            // Just in case!
+            marky.clear();
+            
+            marky.mark("setup");
+
             let booting = true;
             
             if(clean) {
@@ -68,7 +77,7 @@ module.exports = ({ patterns = [], dest = "./dist", options = false }) => {
 
                 del.sync(dest);
 
-                log.silly("clean", `Cleaning destination took ${marky.stop("cleaning").duration}ms`);
+                log.silly("clean", `Cleaning destination took ${stop("cleaning")}`);
             }
             
             log.silly("collect", `Collecting files...`);
@@ -80,7 +89,7 @@ module.exports = ({ patterns = [], dest = "./dist", options = false }) => {
             // to iterate intermediate directories and glob matchers aren't good at that bit
             const files = globby.sync(globs, { cwd : dir });
 
-            log.silly("collect", `Done collecting files in ${marky.stop("collecting").duration}ms`);
+            log.silly("collect", `Done collecting files in ${stop("collecting")}`);
 
             // Don't want to make rollup wait on this, so wrapped in an async IIFE
             (async function() {
@@ -90,65 +99,74 @@ module.exports = ({ patterns = [], dest = "./dist", options = false }) => {
 
                 await files.forEach((file) => cp(file, path.join(dest, transform(file))));
 
-                log.silly("copy", `Initial copy complete in ${marky.stop("copying").duration}ms`);
+                log.silly("copy", `Initial copy complete in ${stop("copying")}`);
             }());
 
             marky.mark("watcher init");
 
-            const watcher = new CheapWatch({
-                dir,
-                watch,
-
-                // Check paths iterated at startup and any newly created dirs/files
-                // to ensure that they should be handled
-                filter : ({ path : item }) => {
-                    // Paper over differences between cheap-watch and globbers
-                    const name = `./${item}`;
-
-                    // During booting phase check against list from globby
-                    if(booting) {
-                        return files.some((file) => file.startsWith(name));
-                    }
-
-                    // after booting need to compare against the globs themselves
-                    return match([ name ], globs).length > 0;
-                },
-            });
-
             // Don't want to make rollup wait on this, so wrapped in an async IIFE
             (async function() {
+                if(!watch) {
+                    return;
+                }
+
+                const watcher = new CheapWatch({
+                    dir,
+                    watch,
+
+                    // Check paths iterated at startup and any newly created dirs/files
+                    // to ensure that they should be handled
+                    filter : ({ path : item }) => {
+                        // Paper over differences between cheap-watch and globbers
+                        const name = `./${item}`;
+
+                        // During booting phase check against list from globby
+                        if(booting) {
+                            return files.some((file) => file.startsWith(name));
+                        }
+
+                        // after booting need to compare against the globs themselves
+                        return match([ name ], globs).length > 0;
+                    },
+                });
+
+                // Added or changed files/dirs
+                watcher.on("+", async ({ path : item, stats }) => {
+                    // Never want to copy just a directory, cp-file will create
+                    // intermediate directories automatically anyways
+                    if(stats.isDirectory()) {
+                        return;
+                    }
+
+                    log.silly("change", `Copying ${item}...`);
+
+                    marky.mark("copy");
+
+                    await cp(path.join(dir, item), path.join(dest, transform(item)));
+
+                    log.silly("change", `Copied in ${stop("copy")}`);
+                });
+
+                // Removed files/dirs
+                watcher.on("-", async ({ path : item, stats }) => {
+                    log.silly("change", `Removing ${item}...`);
+
+                    marky.mark("delete");
+
+                    await del(path.join(dest, transform(item)));
+
+                    log.silly("change", `Deleted in ${stop("delete")}`);
+                });
+                
+                // Boot up the watcher
                 await watcher.init();
 
                 booting = false;
 
-                log.silly("watch", `Initialized watcher in ${marky.stop("watcher init").duration}ms`);
-
-                if(watch) {
-                    log.info("watch", "Watching for changes to copy...");
-                } else {
-                    watcher.close();
-                }
+                log.silly("watch", `Initialized watcher in ${stop("watcher init")}`);
             }());
-            
-            // Added or changed files/dirs
-            watcher.on("+", ({ path : item, stats }) => {
-                // Never want to copy just a directory, cp-file will create
-                // intermediate directories automatically anyways
-                if(stats.isDirectory()) {
-                    return;
-                }
 
-                log.silly("change", `Copying ${item}...`);
-                
-                cp(path.join(dir, item), path.join(dest, transform(item)));
-            });
-            
-            // Removed files/dirs
-            watcher.on("-", ({ path : item, stats }) => {
-                log.silly("change", `Removing ${item}...`);
-
-                del(path.join(dest, transform(item)));
-            });
+            log.silly("meta", `Setup complete in ${stop("setup")}`);
         },
     };
 };
