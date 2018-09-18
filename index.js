@@ -71,15 +71,6 @@ module.exports = ({ patterns = [], dest = "./dist", options = false }) => {
 
             let booting = true;
             
-            if(clean) {
-                log.verbose("clean", `Cleaning ${dest}...`);
-                marky.mark("cleaning");
-
-                del.sync(dest);
-
-                log.silly("clean", `Cleaning destination took ${stop("cleaning")}`);
-            }
-            
             log.silly("collect", `Collecting files...`);
 
             marky.mark("collecting");
@@ -89,10 +80,20 @@ module.exports = ({ patterns = [], dest = "./dist", options = false }) => {
             // to iterate intermediate directories and glob matchers aren't good at that bit
             const files = globby.sync(globs, { cwd : dir });
 
-            log.silly("collect", `Done collecting files in ${stop("collecting")}`);
+            log.silly("collect", `Collected ${files.length} files in ${stop("collecting")}`);
 
             // Don't want to make rollup wait on this, so wrapped in an async IIFE
             (async function() {
+                if(clean) {
+                    log.verbose("clean", `Cleaning ${dest}...`);
+
+                    marky.mark("cleaning");
+
+                    await del.sync(dest);
+
+                    log.silly("clean", `Cleaning destination took ${stop("cleaning")}`);
+                }
+                
                 log.silly("copy", "Initial copy starting...");
 
                 marky.mark("copying");
@@ -102,13 +103,14 @@ module.exports = ({ patterns = [], dest = "./dist", options = false }) => {
                 log.silly("copy", `Initial copy complete in ${stop("copying")}`);
             }());
 
-            marky.mark("watcher init");
-
+            
             // Don't want to make rollup wait on this, so wrapped in an async IIFE
             (async function() {
                 if(!watch) {
                     return;
                 }
+                
+                marky.mark("watcher setup");
 
                 const watcher = new CheapWatch({
                     dir,
@@ -158,6 +160,10 @@ module.exports = ({ patterns = [], dest = "./dist", options = false }) => {
                     log.silly("change", `Deleted in ${stop("delete")}`);
                 });
                 
+                log.silly("watch", `Set up watcher in ${stop("watcher setup")}`);
+
+                marky.mark("watcher init");
+
                 // Boot up the watcher
                 await watcher.init();
 
