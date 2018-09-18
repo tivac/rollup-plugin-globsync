@@ -103,7 +103,6 @@ module.exports = ({ patterns = [], dest = "./dist", options = false }) => {
                 log.silly("copy", `Initial copy complete in ${stop("copying")}`);
             }());
 
-            
             // Don't want to make rollup wait on this, so wrapped in an async IIFE
             (async function() {
                 if(!watch) {
