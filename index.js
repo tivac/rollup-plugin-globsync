@@ -52,7 +52,7 @@ module.exports = ({ patterns = [], dest = "./dist", options = false }) => {
             )),
         
         // No inception, please
-        `!./${path.relative(dir, dest)}/**`,
+        `!./${path.relative(dir, dest).replace(/\\/g, "/")}/**`,
     ];
 
     log.silly("config", `Globs:\n${JSON.stringify(globs, null, 4)}`);
