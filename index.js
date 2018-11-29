@@ -16,6 +16,8 @@ const log = require("npmlog");
 // Wrapper around pretty-ms and marky.stop
 const stop = (name) => pretty(marky.stop(name).duration);
 
+const slash = (str) => str.replace(/\\/g, "/");
+
 module.exports = ({ patterns = [], dest = "./dist", options = false }) => {
     const {
         dir = process.cwd(),
@@ -25,7 +27,7 @@ module.exports = ({ patterns = [], dest = "./dist", options = false }) => {
         loglevel = "info",
         transform = (file) => file,
     } = options;
-    
+
     log.level = verbose ? "verbose" : loglevel;
 
     const watch = Boolean(process.env.ROLLUP_WATCH);
@@ -47,12 +49,12 @@ module.exports = ({ patterns = [], dest = "./dist", options = false }) => {
             // make absolute paths relative so they match anything
             .map((item) => (
                 path.isAbsolute(item) ?
-                    `./${path.relative(dir, item).replace(/\\/g, "/")}` :
+                    `./${slash(path.relative(dir, item))}` :
                     item
             )),
-        
+
         // No inception, please
-        `!./${path.relative(dir, dest).replace(/\\/g, "/")}/**`,
+        `!./${slash(path.relative(dir, dest))}/**`,
     ];
 
     log.silly("config", `Globs:\n${JSON.stringify(globs, null, 4)}`);
@@ -72,11 +74,11 @@ module.exports = ({ patterns = [], dest = "./dist", options = false }) => {
 
             // Just in case!
             marky.clear();
-            
+
             marky.mark("setup");
 
             let booting = true;
-            
+
             log.silly("collect", `Collecting files...`);
 
             marky.mark("collecting");
@@ -99,7 +101,7 @@ module.exports = ({ patterns = [], dest = "./dist", options = false }) => {
 
                     log.silly("clean", `Cleaning destination took ${stop("cleaning")}`);
                 }
-                
+
                 log.silly("copy", "Initial copy starting...");
 
                 marky.mark("copying");
@@ -114,7 +116,7 @@ module.exports = ({ patterns = [], dest = "./dist", options = false }) => {
                 if(!watch) {
                     return;
                 }
-                
+
                 marky.mark("watcher setup");
 
                 const watcher = new CheapWatch({
@@ -164,7 +166,7 @@ module.exports = ({ patterns = [], dest = "./dist", options = false }) => {
 
                     log.silly("change", `Deleted in ${stop("delete")}`);
                 });
-                
+
                 log.silly("watch", `Set up watcher in ${stop("watcher setup")}`);
 
                 marky.mark("watcher init");
