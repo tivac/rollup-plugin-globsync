@@ -1,0 +1,31 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`functionality should copy files when the build starts 1`] = `
+Array [
+  Object {
+    "file": "file.txt",
+    "text": "file.txt
+",
+  },
+]
+`;
+
+exports[`functionality should recopy changed files 1`] = `
+Array [
+  Object {
+    "file": "file.txt",
+    "text": "file.txt
+",
+  },
+]
+`;
+
+exports[`functionality should recopy changed files 2`] = `
+Array [
+  Object {
+    "file": "file.txt",
+    "text": "console.log("Hello");
+",
+  },
+]
+`;

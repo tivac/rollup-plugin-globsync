@@ -24,7 +24,9 @@
     "eslint": "^5.9.0",
     "eslint-plugin-jest": "^22.1.0",
     "jest": "^23.6.0",
-    "rollup": "^0.67.3"
+    "read-dir-deep": "^1.0.4",
+    "rollup": "^0.67.3",
+    "tempy": "^0.2.1"
   },
   "keywords": [
     "rollup",
