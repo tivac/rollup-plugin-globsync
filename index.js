@@ -57,6 +57,10 @@ module.exports = ({ patterns = [], dest = "./dist", options = false }) => {
 
     log.silly("config", `Globs:\n${JSON.stringify(globs, null, 4)}`);
     log.silly("config", `Generating globs took ${stop("generating globs")}`);
+    log.silly("config", `Destination: ${dest}`);
+    log.silly("config", `Options ${JSON.stringify({
+        dir, clean, verbose, manifest, loglevel, transform
+    }, null, 4)}`);
 
     return {
         name : "globsync",
