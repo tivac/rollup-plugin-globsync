@@ -14,7 +14,7 @@ describe("functionality", () => {
         process.env.ROLLUP_WATCH = false;
     });
 
-    it("should copy files when the build starts", async () => {
+    it.skip("should copy files when the build starts", async () => {
         const src  = specimen("basic");
         const dest = temp();
 
@@ -37,7 +37,7 @@ describe("functionality", () => {
         expect(dest()).toMatchDirSnapshot();
     });
 
-    it("should recopy changed files", async () => {
+    it.skip("should recopy changed files", async () => {
         const spec = specimen("basic");
 
         const src = temp();
@@ -66,12 +66,12 @@ describe("functionality", () => {
                 }),
             ],
         });
-        
+
         expect(dest()).toMatchDirSnapshot();
-        
+
         // Change file.txt so the plugin sees it
         await cp(spec("index.js"), src("file.txt"));
-        
+
         expect(dest()).toMatchDirSnapshot();
     });
 });
