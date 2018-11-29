@@ -21,8 +21,9 @@ module.exports = ({ patterns = [], dest = "./dist", options = false }) => {
         dir = process.cwd(),
         clean = true,
         verbose = false,
+        manifest = false,
         loglevel = "info",
-        transform = (file) => file
+        transform = (file) => file,
     } = options;
     
     log.level = verbose ? "verbose" : loglevel;
@@ -30,6 +31,7 @@ module.exports = ({ patterns = [], dest = "./dist", options = false }) => {
     const watch = Boolean(process.env.ROLLUP_WATCH);
 
     let runs = 0;
+    let files;
 
     marky.mark("generating globs");
 
@@ -42,7 +44,7 @@ module.exports = ({ patterns = [], dest = "./dist", options = false }) => {
             .filter(Boolean)
             // flatten one level deep
             .reduce((acc, val) => acc.concat(val), [])
-            //make absolute paths relative so they match anything
+            // make absolute paths relative so they match anything
             .map((item) => (
                 path.isAbsolute(item) ?
                     `./${path.relative(dir, item).replace(/\\/g, "/")}` :
@@ -78,7 +80,7 @@ module.exports = ({ patterns = [], dest = "./dist", options = false }) => {
             // Use globby to walk the FS and find all files matching globs
             // for use in cheap-watch's filter function since it'll need to know
             // to iterate intermediate directories and glob matchers aren't good at that bit
-            const files = globby.sync(globs, { cwd : dir });
+            files = globby.sync(globs, { cwd : dir });
 
             log.silly("collect", `Collected ${files.length} files in ${stop("collecting")}`);
 
@@ -149,7 +151,7 @@ module.exports = ({ patterns = [], dest = "./dist", options = false }) => {
                 });
 
                 // Removed files/dirs
-                watcher.on("-", async ({ path : item, stats }) => {
+                watcher.on("-", async ({ path : item }) => {
                     log.silly("change", `Removing ${item}...`);
 
                     marky.mark("delete");
@@ -172,6 +174,18 @@ module.exports = ({ patterns = [], dest = "./dist", options = false }) => {
             }());
 
             log.silly("meta", `Setup complete in ${stop("setup")}`);
+        },
+
+        resolveId(importee) {
+            return importee === manifest ? manifest : undefined;
+        },
+
+        load(id) {
+            if(id !== manifest) {
+                return null;
+            }
+
+            return `export default ${JSON.stringify(files)}`;
         },
     };
 };

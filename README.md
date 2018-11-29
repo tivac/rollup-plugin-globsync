@@ -2,10 +2,6 @@
 
 Rollup plugin to take a list of globs, copy them on the first build, and optionally watch for changes and sync those over afterwards.
 
-## ⚡💀⚡ WARNING ⚡💀⚡
-
-This is still **prototype** code & it lacks any actual tests. Buyer beware!
-
 ## Installation
 
 ```bash
@@ -83,6 +79,10 @@ Whether or not to remove all files within `dist` when rollup starts up. Defaults
 ### `options.transform`
 
 A `(file) => file` function that allows for programatically changing the destination of files. Defaults to the identify function.
+
+### `options.manifest`
+
+A `string` defining a package name for the manifest of files to be copied/watched that you can `import` in your code, in case your bundled code cares about the static files that are being copied alongside it. Defaults to `false`.
 
 ### `options.verbose`
 
