@@ -6,7 +6,8 @@
   "version": "1.0.1",
   "license": "MIT",
   "scripts": {
-    "test": "jest"
+    "test": "jest",
+    "lint": "eslint ."
   },
   "dependencies": {
     "cheap-watch": "^0.3.0",
@@ -21,7 +22,9 @@
   "devDependencies": {
     "@tivac/eslint-config": "^2.2.2",
     "eslint": "^5.9.0",
-    "jest": "^23.6.0"
+    "eslint-plugin-jest": "^22.1.0",
+    "jest": "^23.6.0",
+    "rollup": "^0.67.3"
   },
   "keywords": [
     "rollup",
