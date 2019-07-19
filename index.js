@@ -17,6 +17,7 @@ const log = require("npmlog");
 const stop = (name) => pretty(marky.stop(name).duration);
 
 const slash = (str) => str.replace(/\\/g, "/");
+const identity = (arg) => arg;
 
 module.exports = ({ patterns = [], dest = "./dist", options = false }) => {
     const {
@@ -25,7 +26,7 @@ module.exports = ({ patterns = [], dest = "./dist", options = false }) => {
         verbose = false,
         manifest = false,
         loglevel = "info",
-        transform = (file) => file,
+        transform = identity,
     } = options;
 
     log.level = verbose ? "verbose" : loglevel;
@@ -180,7 +181,7 @@ module.exports = ({ patterns = [], dest = "./dist", options = false }) => {
 
                     await del(path.join(dest, files.get(item) || transform(item)));
 
-                    files.remove(item);
+                    files.delete(item);
 
                     log.silly("change", `Deleted in ${stop("delete")}`);
                 });
