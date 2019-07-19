@@ -9,7 +9,7 @@
     "test": "jest",
     "lint": "eslint .",
     "prerelease": "npm run test && npm run lint",
-    "release": "npm version -m \"v%s\""
+    "release": "npm version"
   },
   "dependencies": {
     "cheap-watch": "^0.3.0",
