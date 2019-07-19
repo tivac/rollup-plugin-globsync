@@ -12,23 +12,23 @@
     "release": "npm version"
   },
   "dependencies": {
-    "cheap-watch": "^0.3.0",
-    "cp-file": "^6.0.0",
-    "del": "^3.0.0",
-    "globby": "^8.0.1",
+    "cheap-watch": "^1.0.2",
+    "cp-file": "^7.0.0",
+    "del": "^5.0.0",
+    "globby": "^10.0.1",
     "marky": "^1.2.1",
-    "multimatch": "^2.1.0",
+    "multimatch": "^4.0.0",
     "npmlog": "^4.1.2",
-    "pretty-ms": "^3.2.0"
+    "pretty-ms": "^5.0.0"
   },
   "devDependencies": {
-    "@tivac/eslint-config": "^2.2.2",
-    "eslint": "^5.9.0",
-    "eslint-plugin-jest": "^22.1.0",
-    "jest": "^23.6.0",
-    "read-dir-deep": "^1.0.4",
-    "rollup": "^0.67.3",
-    "tempy": "^0.2.1"
+    "@tivac/eslint-config": "^2.4.0",
+    "eslint": "^6.0.1",
+    "eslint-plugin-jest": "^22.11.1",
+    "jest": "^24.8.0",
+    "read-dir-deep": "^7.0.1",
+    "rollup": "^1.17.0",
+    "tempy": "^0.3.0"
   },
   "keywords": [
     "rollup",
