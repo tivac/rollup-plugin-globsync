@@ -61,7 +61,12 @@ module.exports = ({ patterns = [], dest = "./dist", options = false }) => {
     log.silly("config", `Generating globs took ${stop("generating globs")}`);
     log.silly("config", `Destination: ${dest}`);
     log.silly("config", `Options ${JSON.stringify({
-        dir, clean, verbose, manifest, loglevel, transform
+        dir,
+        clean,
+        verbose,
+        manifest,
+        loglevel,
+        transform,
     }, null, 4)}`);
 
     return {
@@ -88,7 +93,13 @@ module.exports = ({ patterns = [], dest = "./dist", options = false }) => {
             // to iterate intermediate directories and glob matchers aren't good at that bit
             files = globby.sync(globs, { cwd : dir });
 
-            log.silly("collect", `Collected ${files.length} files in ${stop("collecting")}`);
+            // Generate a map of files to their transformed values
+            files = new Map(files.map((file) => [
+                file,
+                transform(file),
+            ]));
+
+            log.silly("collect", `Collected ${files.size} files in ${stop("collecting")}`);
 
             // Don't want to make rollup wait on this, so wrapped in an async IIFE
             (async function() {
@@ -106,7 +117,7 @@ module.exports = ({ patterns = [], dest = "./dist", options = false }) => {
 
                 marky.mark("copying");
 
-                await files.forEach((file) => cp(file, path.join(dest, transform(file))));
+                await files.forEach((output, input) => cp(input, path.join(dest, output)));
 
                 log.silly("copy", `Initial copy complete in ${stop("copying")}`);
             }());
@@ -116,6 +127,8 @@ module.exports = ({ patterns = [], dest = "./dist", options = false }) => {
                 if(!watch) {
                     return;
                 }
+
+                const inputs = [ ...files.keys() ];
 
                 marky.mark("watcher setup");
 
@@ -128,10 +141,11 @@ module.exports = ({ patterns = [], dest = "./dist", options = false }) => {
                     filter : ({ path : item }) => {
                         // Paper over differences between cheap-watch and globbers
                         const name = `./${item}`;
+                        
 
                         // During booting phase check against list from globby
                         if(booting) {
-                            return files.some((file) => file.startsWith(name));
+                            return inputs.some((file) => file.startsWith(name));
                         }
 
                         // after booting need to compare against the globs themselves
@@ -151,7 +165,9 @@ module.exports = ({ patterns = [], dest = "./dist", options = false }) => {
 
                     marky.mark("copy");
 
-                    await cp(path.join(dir, item), path.join(dest, transform(item)));
+                    files.set(item, transform(item));
+
+                    await cp(path.join(dir, item), path.join(dest, files.get(item)));
 
                     log.silly("change", `Copied in ${stop("copy")}`);
                 });
@@ -162,7 +178,9 @@ module.exports = ({ patterns = [], dest = "./dist", options = false }) => {
 
                     marky.mark("delete");
 
-                    await del(path.join(dest, transform(item)));
+                    await del(path.join(dest, files.get(item) || transform(item)));
+
+                    files.remove(item);
 
                     log.silly("change", `Deleted in ${stop("delete")}`);
                 });
@@ -191,7 +209,7 @@ module.exports = ({ patterns = [], dest = "./dist", options = false }) => {
                 return null;
             }
 
-            return `export default ${JSON.stringify(files)}`;
+            return `export default new Map(${JSON.stringify([ ...files.entries() ])})`;
         },
     };
 };
