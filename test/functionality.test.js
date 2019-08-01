@@ -28,8 +28,8 @@ describe("functionality", () => {
                     ],
                     dest    : dest(),
                     options : {
-                        dir : src()
-                    }
+                        dir : src(),
+                    },
                 }),
             ],
         });
@@ -62,7 +62,7 @@ describe("functionality", () => {
                     options : {
                         dir      : src(),
                         loglevel : "silly",
-                    }
+                    },
                 }),
             ],
         });
