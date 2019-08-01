@@ -9,12 +9,13 @@ require("./util/expect.toMatchDirSnapshot.js");
 
 const plugin = require("../index.js");
 
-describe("functionality", () => {
+// TODO: how on earth do I even test this?
+describe.skip("functionality", () => {
     afterEach(() => {
         process.env.ROLLUP_WATCH = false;
     });
 
-    it.skip("should copy files when the build starts", async () => {
+    it("should copy files when the build starts", async () => {
         const src  = specimen("basic");
         const dest = temp();
 
@@ -37,7 +38,7 @@ describe("functionality", () => {
         expect(dest()).toMatchDirSnapshot();
     });
 
-    it.skip("should recopy changed files", async () => {
+    it("should recopy changed files", async () => {
         const spec = specimen("basic");
 
         const src = temp();
