@@ -105,11 +105,9 @@ module.exports = ({ patterns = [], dest = "./dist", options = false }) => {
             // Don't want to make rollup wait on this, so wrapped in an async IIFE
             (async function() {
                 if(clean) {
-                    log.verbose("clean", `Cleaning ${dest}...`);
-
                     marky.mark("cleaning");
 
-                    await del.sync(dest);
+                    await del(slash(dest));
 
                     log.silly("clean", `Cleaning destination took ${stop("cleaning")}`);
                 }
@@ -118,7 +116,13 @@ module.exports = ({ patterns = [], dest = "./dist", options = false }) => {
 
                 marky.mark("copying");
 
-                await files.forEach((output, input) => cp(input, path.join(dest, output)));
+                await Promise.all(
+                    [ ...files.entries() ].map(([ input, output ]) => {
+                        log.silly("copy", `${input} => ${output}`);
+
+                        return cp(input, path.join(dest, output));
+                    })
+                );
 
                 log.silly("copy", `Initial copy complete in ${stop("copying")}`);
             }());
@@ -142,7 +146,7 @@ module.exports = ({ patterns = [], dest = "./dist", options = false }) => {
                     filter : ({ path : item }) => {
                         // Paper over differences between cheap-watch and globbers
                         const name = `./${item}`;
-                        
+
 
                         // During booting phase check against list from globby
                         if(booting) {
@@ -162,11 +166,11 @@ module.exports = ({ patterns = [], dest = "./dist", options = false }) => {
                         return;
                     }
 
-                    log.silly("change", `Copying ${item}...`);
-
                     marky.mark("copy");
 
                     files.set(item, transform(item));
+
+                    log.silly("change", `${item} => ${files.get(item)}`);
 
                     await cp(path.join(dir, item), path.join(dest, files.get(item)));
 
@@ -179,7 +183,9 @@ module.exports = ({ patterns = [], dest = "./dist", options = false }) => {
 
                     marky.mark("delete");
 
-                    await del(path.join(dest, files.get(item) || transform(item)));
+                    const tgt = path.join(dest, files.get(item) || transform(item));
+
+                    await del(slash(tgt));
 
                     files.delete(item);
 
