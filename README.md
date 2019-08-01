@@ -88,7 +88,7 @@ A `string` defining a package name for the manifest of files to be copied/watche
 
 A shorthand to enable verbose logging. Defaults to `false`. Overrides `level` option if set.
 
-### `options.level`
+### `options.loglevel`
 
 Specify the exact level to log at. Defaults to `info`.
 
