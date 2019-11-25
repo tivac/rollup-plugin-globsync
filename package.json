@@ -14,20 +14,20 @@
   "dependencies": {
     "cheap-watch": "^1.0.2",
     "cp-file": "^7.0.0",
-    "del": "^5.0.0",
+    "del": "^5.1.0",
     "globby": "^10.0.1",
     "marky": "^1.2.1",
     "multimatch": "^4.0.0",
     "npmlog": "^4.1.2",
-    "pretty-ms": "^5.0.0"
+    "pretty-ms": "^5.1.0"
   },
   "devDependencies": {
     "@tivac/eslint-config": "^2.4.0",
-    "eslint": "^6.1.0",
-    "eslint-plugin-jest": "^23.1.1",
-    "jest": "^24.8.0",
+    "eslint": "^6.7.1",
+    "eslint-plugin-jest": "^23.0.4",
+    "jest": "^24.9.0",
     "read-dir-deep": "^7.0.1",
-    "rollup": "^1.18.0",
+    "rollup": "^1.27.5",
     "tempy": "^0.3.0"
   },
   "keywords": [
