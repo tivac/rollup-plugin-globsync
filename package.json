@@ -15,7 +15,7 @@
     "cheap-watch": "^1.0.2",
     "cp-file": "^7.0.0",
     "del": "^5.0.0",
-    "globby": "^10.0.1",
+    "globby": "^11.0.0",
     "marky": "^1.2.1",
     "multimatch": "^4.0.0",
     "npmlog": "^4.1.2",
