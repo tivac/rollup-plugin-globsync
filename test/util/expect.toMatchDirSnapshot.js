@@ -8,11 +8,11 @@ const { toMatchSnapshot } = require("jest-snapshot");
 
 expect.extend({
     toMatchDirSnapshot(source) {
-        const files = read(source);
+        const files = read(source, { absolute : true });
 
         const contents = files.sort().map((file) => ({
-            file,
-            text : fs.readFileSync(path.join(source, file), "utf8"),
+            file : path.relative(source, file),
+            text : fs.readFileSync(file, "utf8"),
         }));
 
         return toMatchSnapshot.call(
