@@ -38,6 +38,9 @@ module.exports = ({ patterns = [], dest = "./dist", options = false }) => {
 
     let runs = 0;
     let files;
+    let watcher;
+    let initialCopy;
+    let watcherReady;
 
     marky.mark("generating globs");
 
@@ -78,35 +81,36 @@ module.exports = ({ patterns = [], dest = "./dist", options = false }) => {
     };
 
     const copy = async (item) => {
-        marky.mark("copy");
+        const timer = `copy-${item}`;
 
-        const out = transformed(item);
-        const tgt = path.join(dest, out);
+        marky.mark(timer);
 
-        files.set(item, out);
+        const tgt = transformed(item);
 
-        log.silly("change", `${item} => ${out}`);
+        log.silly("copy", `Copying ${item}...`);
 
         // Delete the target before copying
         await del(tgt);
 
         await cp(path.join(dir, item), tgt);
 
-        log.verbose("change", `Copied ${item} to ${out} in ${stop("copy")}`);
+        log.verbose("copy", `Copied ${tgt} in ${stop(timer)}`);
     };
 
     const remove = async (item) => {
-        marky.mark("delete");
-        
-        log.silly("change", `Removing ${item}...`);
+        const timer = `delete-${item}`;
 
-        const tgt = path.join(dest, transformed(item));
+        marky.mark(timer);
+        
+        log.silly("remove", `Removing ${item}...`);
+
+        const tgt = transformed(item);
 
         await del(slash(tgt));
 
         files.delete(item);
 
-        log.verbose("change", `Deleted ${tgt} in ${stop("delete")}`);
+        log.verbose("remove", `Deleted ${tgt} in ${stop(timer)}`);
     };
 
     log.silly("config", `Globs:\n${JSON.stringify(globs, null, 4)}`);
@@ -119,6 +123,7 @@ module.exports = ({ patterns = [], dest = "./dist", options = false }) => {
         manifest,
         loglevel,
         transform,
+        watching,
     }, null, 4)}`);
 
     return {
@@ -137,10 +142,6 @@ module.exports = ({ patterns = [], dest = "./dist", options = false }) => {
 
             marky.mark("collecting");
 
-            const { readDirDeepSync : read } = require("read-dir-deep");
-
-            console.log(read(dir));
-
             // Use globby to walk the FS and find all files matching globs
             // Used for initial copy of files
             const found = await globby(globs, { cwd : dir });
@@ -151,8 +152,9 @@ module.exports = ({ patterns = [], dest = "./dist", options = false }) => {
 
             log.verbose("collect", `Collected ${files.size} files in ${stop("collecting")}`);
 
-            // Don't want to make rollup wait on this, so wrapped in an async IIFE
-            (async function() {
+            // Don't want to make rollup wait on this before bundling, so wrapped in an async IIFE
+            // and checked down below in generateBundle
+            initialCopy = (async function() {
                 if(clean) {
                     marky.mark("cleaning");
 
@@ -179,12 +181,16 @@ module.exports = ({ patterns = [], dest = "./dist", options = false }) => {
             }());
 
             if(!watch) {
+                watcherReady = Promise.resolve();
+
                 return;
             }
 
+            log.silly("watch", "Setting up watcher...");
+
             marky.mark("watcher setup");
 
-            const watcher = chokidar.watch(globs, {
+            watcher = chokidar.watch(globs, {
                 ignoreInitial : true,
                 cwd           : dir,
             });
@@ -197,8 +203,28 @@ module.exports = ({ patterns = [], dest = "./dist", options = false }) => {
             watcher.on("unlink", remove);
             watcher.on("unlinkDir", remove);
 
-            watcher.once("ready", () => {
-                log.verbose("watch", `Set up watcher in ${stop("watcher setup")}`);
+            // Oh noooooo something bad happened
+            watcher.on("error", (e) => {
+                throw e;
+            });
+
+            watcherReady = new Promise((resolve) => {
+                watcher.once("ready", () => {
+                    const watched = watcher.getWatched();
+                    const paths = [];
+
+                    Object.keys(watched).forEach((key) => {
+                        watched[key].forEach((file) => {
+                            paths.push(`${key}/${file}`);
+                        });
+                    });
+    
+                    log.verbose("watch", `Watching ${paths.length} paths`);
+                    log.silly("watch", JSON.stringify(paths, null, 4));
+                    log.verbose("watch", `Set up watcher in ${stop("watcher setup")}`);
+
+                    resolve();
+                });
             });
         },
 
@@ -212,6 +238,13 @@ module.exports = ({ patterns = [], dest = "./dist", options = false }) => {
             }
 
             return `export default new Map(${JSON.stringify([ ...files.entries() ])})`;
+        },
+
+        async generateBundle() {
+            await Promise.all([
+                initialCopy,
+                watcherReady,
+            ]);
         },
 
         buildEnd(error) {
@@ -230,6 +263,13 @@ module.exports = ({ patterns = [], dest = "./dist", options = false }) => {
                 source   : JSON.stringify(output, null, 4),
                 fileName : assetsfile,
             });
+        },
+
+        // Only really intended to be used by tests
+        async _stop() {
+            await watcher.close();
+
+            watcher = false;
         },
     };
 };
