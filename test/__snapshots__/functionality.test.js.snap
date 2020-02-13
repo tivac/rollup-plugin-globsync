@@ -29,3 +29,7 @@ Array [
   },
 ]
 `;
+
+exports[`functionality should remove deleted files 1`] = `Array []`;
+
+exports[`functionality should remove deleted files 2`] = `Array []`;

@@ -3,12 +3,12 @@
 const fs = require("fs");
 const path = require("path");
 
-const read = require("read-dir-deep");
+const { readDirDeepSync : read } = require("read-dir-deep");
 const { toMatchSnapshot } = require("jest-snapshot");
 
 expect.extend({
     toMatchDirSnapshot(source) {
-        const files = read.sync(source);
+        const files = read(source);
 
         const contents = files.sort().map((file) => ({
             file,
