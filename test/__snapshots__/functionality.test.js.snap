@@ -1,5 +1,45 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
+exports[`functionality should provide manifest as a file 1`] = `
+"{
+    \\"file.txt\\": \\"file.txt\\"
+}"
+`;
+
+exports[`functionality should provide manifest as a file w/ transforms 1`] = `
+"{
+    \\"file.txt\\": \\"/file.transformed.txt\\"
+}"
+`;
+
+exports[`functionality should provide manifest as a module (manifest) 1`] = `
+"var manifest = new Map([[\\"file.txt\\",\\"file.txt\\"]]);
+
+console.log(manifest);
+"
+`;
+
+exports[`functionality should provide manifest as a module (manifest.module) 1`] = `
+"var manifest = new Map([[\\"file.txt\\",\\"file.txt\\"]]);
+
+console.log(manifest);
+"
+`;
+
+exports[`functionality should provide manifest as a module (manifest.module/transform) 1`] = `
+"var manifest = new Map([[\\"file.txt\\",\\"/file.transformed.txt\\"]]);
+
+console.log(manifest);
+"
+`;
+
+exports[`functionality should provide manifest as a module (manifest/transform) 1`] = `
+"var manifest = new Map([[\\"file.txt\\",\\"/file.transformed.txt\\"]]);
+
+console.log(manifest);
+"
+`;
+
 exports[`functionality should recopy changed files 1`] = `
 "Snapshot Diff:
 - First value

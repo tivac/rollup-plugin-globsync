@@ -222,6 +222,73 @@ describe("functionality", () => {
         await expect(dir("/dest/already-there.txt")).toExist();
     });
 
-    it.todo("should provide mappings as a module");
-    it.todo("should provide mappings as a file");
+    it.each([
+        [ "manifest", { manifest : "manifest" } ],
+        [ "manifest/transform", { manifest : "manifest", transform, } ],
+        [ "manifest.module", { manifest : { module : "manifest" } }],
+        [ "manifest.module/transform", { manifest : { module : "manifest" }, transform, }],
+    ])("should provide manifest as a module (%s)", async (key, config) => {
+        const spec = specimen("manifest");
+
+        const bundle = await rollup({
+            input : spec("/index.js"),
+
+            plugins : [
+                plugin({
+                    dir   : spec(),
+                    dest  : dir("/dest"),
+                    globs : [
+                        "*.txt",
+                    ],
+
+                    ...config,
+                }),
+            ],
+        });
+
+        const { output } = await bundle.generate({
+            format : "esm",
+        });
+
+        const [{ code }] = output;
+
+        expect(code).toMatchSnapshot();
+    });
+
+    it.each([
+        [ "file", {} ],
+        [ "file w/ transforms", { transform }],
+    ])("should provide manifest as a %s", async (key, config) => {
+        const spec = specimen("basic");
+
+        const bundle = await rollup({
+            input : spec("/index.js"),
+
+            plugins : [
+                plugin({
+                    dir   : spec(),
+                    dest  : dir("/dest"),
+                    globs : [
+                        "*.txt",
+                    ],
+
+                    manifest : {
+                        file : "manifest.json",
+                    },
+
+                    ...config,
+                }),
+            ],
+        });
+
+        // Manifest is written out when build finishes, so this has to happen
+        await bundle.write({
+            format : "esm",
+            dir    : dir("/dest"),
+        });
+
+        await expect(dir("/dest/manifest.json")).toExist();
+
+        await expect(fs.readFile(dir("/dest/manifest.json"), "utf8")).resolves.toMatchSnapshot();
+    });
 });
