@@ -184,4 +184,38 @@ describe("functionality", () => {
 
         await expect(dir("/dest/file.transformed.txt")).toExist();
     });
+
+    it("should support not cleaning the destination directory", async () => {
+        const spec = specimen("basic");
+
+        await copy(spec(), dir());
+
+        await cp(spec("file.txt"), dir("/dest/already-there.txt"));
+
+        const bundle = await rollup({
+            input : dir("/index.js"),
+
+            plugins : [
+                plugin({
+                    dest     : dir("/dest"),
+                    patterns : [
+                        "*.txt",
+                    ],
+        
+                    options : {
+                        clean : false,
+                    },
+                }),
+            ],
+        });
+
+        await bundle.generate({
+            format : "esm",
+        });
+
+        await expect(dir("/dest/already-there.txt")).toExist();
+    });
+
+    it.todo("should provide mappings as a module");
+    it.todo("should provide mappings as a file");
 });

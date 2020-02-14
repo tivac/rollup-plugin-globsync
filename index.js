@@ -198,6 +198,7 @@ module.exports = ({ patterns = [], dest = "./dist", options = false }) => {
             watcher.on("unlinkDir", remove);
 
             // Oh noooooo something bad happened
+            /* istanbul ignore next */
             watcher.on("error", (e) => {
                 throw e;
             });
