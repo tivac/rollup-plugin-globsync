@@ -1,5 +1,7 @@
 "use strict";
 
+const path = require("path");
+
 const { rollup } = require("rollup");
 const cp = require("cp-file");
 const del = require("del");
@@ -15,6 +17,7 @@ const plugin = require("../index.js");
 describe("functionality", () => {
     const cwd = process.cwd();
     let dir;
+    let instance;
 
     beforeEach(() => {
         dir = temp();
@@ -24,12 +27,18 @@ describe("functionality", () => {
 
     afterEach(() => {
         process.chdir(cwd);
+
+        if(instance) {
+            instance._stop();
+        }
+
+        instance = false;
+        dir = false;
     });
 
     it("should copy files when the build starts", async () => {
         const spec = specimen("basic");
 
-        // Setup files in src temp dir
         await copy(spec(), dir());
 
         await rollup({
@@ -51,10 +60,9 @@ describe("functionality", () => {
     it("should recopy changed files", async () => {
         const spec = specimen("basic");
 
-        // Setup files in src temp dir
         await copy(spec(), dir());
 
-        const instance = plugin({
+        instance = plugin({
             dest     : dir("/dest"),
             patterns : [
                 "*.txt",
@@ -72,28 +80,25 @@ describe("functionality", () => {
             ],
         });
 
-        // Make sure the initial version is there
         await bundle.generate({
             format : "esm",
         });
 
+        await expect(dir("/dest/file.txt")).toExist();
+
         const changed = expect(dir("/dest/file.txt")).toChange();
 
-        // Change file.txt so the plugin sees it
         await cp(spec("index.js"), dir("/file.txt"));
 
         await changed;
-
-        await instance._stop();
     });
     
     it("should copy added files", async () => {
         const spec = specimen("basic");
 
-        // Setup files in src temp dir
         await copy(spec(), dir());
 
-        const instance = plugin({
+        instance = plugin({
             dest     : dir("/dest"),
             patterns : [
                 "*.txt",
@@ -103,7 +108,7 @@ describe("functionality", () => {
             },
         });
 
-        const bundle = await rollup({
+        await rollup({
             input : dir("/index.js"),
 
             plugins : [
@@ -111,26 +116,17 @@ describe("functionality", () => {
             ],
         });
 
-        // Make sure the initial version is there
-        await bundle.generate({
-            format : "esm",
-        });
-
-        // Add a new file
         await cp(spec("file.txt"), dir("/file2.txt"));
 
         await expect(dir("/dest/file2.txt")).toExist();
-
-        await instance._stop();
     });
     
     it("should remove deleted files", async () => {
         const spec = specimen("basic");
 
-        // Setup files in src temp dir
         await copy(spec(), dir());
 
-        const instance = plugin({
+        instance = plugin({
             dest     : dir("/dest"),
             patterns : [
                 "*.txt",
@@ -152,14 +148,40 @@ describe("functionality", () => {
         await bundle.generate({
             format : "esm",
         });
+
+        await expect(dir("/dest/file.txt")).toExist();
         
-        expect(dir("/dest")).toMatchDirSnapshot();
-        
-        // Remove file.txt so the plugin sees it
         await del(dir("/file.txt"));
         
         await expect(dir("/dest/file.txt")).not.toExist();
+    });
+        
+    it("should use the transform function", async () => {
+        const spec = specimen("basic");
 
-        await instance._stop();
+        await copy(spec(), dir());
+
+        await rollup({
+            input : dir("/index.js"),
+
+            plugins : [
+                plugin({
+                    dest     : dir("/dest"),
+                    patterns : [
+                        "*.txt",
+                    ],
+        
+                    options : {
+                        transform(file) {
+                            const { dir : d, name, ext } = path.parse(file);
+        
+                            return `${d}/${name}.transformed${ext}`;
+                        },
+                    },
+                }),
+            ],
+        });
+
+        await expect(dir("/dest/file.transformed.txt")).toExist();
     });
 });

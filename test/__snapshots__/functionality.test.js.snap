@@ -8,13 +8,3 @@ exports[`functionality should recopy changed files 1`] = `
 - file.txt
 + console.log(\\"Hello\\");"
 `;
-
-exports[`functionality should remove deleted files 1`] = `
-Array [
-  Object {
-    "file": "file.txt",
-    "text": "file.txt
-",
-  },
-]
-`;
