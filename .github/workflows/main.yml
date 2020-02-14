@@ -38,10 +38,11 @@ jobs:
       run: npm ci
     
     - name: Test
+      if: matrix.os != 'ubuntu-latest' || matrix.node_version != '12'
       run: npm test -- --ci --verbose
 
     # Run codecov after all builds, and only on a single environment
-    - name: Gather Coverage
+    - name: Test w/ Coverage
       if: matrix.os == 'ubuntu-latest' && matrix.node_version == '12'
       run: npm test -- --ci --coverage
     
