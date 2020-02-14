@@ -227,10 +227,10 @@ describe("functionality", () => {
     });
 
     it.each([
-        [ "manifest", { manifest : "manifest" } ],
-        [ "manifest/transform", { manifest : "manifest", transform, } ],
+        [ "manifest", { manifest : "manifest" }],
+        [ "manifest/transform", { manifest : "manifest", transform }],
         [ "manifest.module", { manifest : { module : "manifest" } }],
-        [ "manifest.module/transform", { manifest : { module : "manifest" }, transform, }],
+        [ "manifest.module/transform", { manifest : { module : "manifest" }, transform }],
     ])("should provide manifest as a module (%s)", async (key, config) => {
         const spec = specimen("manifest");
 
@@ -260,7 +260,7 @@ describe("functionality", () => {
     });
 
     it.each([
-        [ "file", {} ],
+        [ "file", {}],
         [ "file w/ transforms", { transform }],
     ])("should provide manifest as a %s", async (key, config) => {
         const spec = specimen("basic");
