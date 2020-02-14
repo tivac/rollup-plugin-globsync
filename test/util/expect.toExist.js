@@ -39,11 +39,15 @@ expect.extend({
 
         // Fail if we don't see a change within a reasonable amount of time
         const timer = setTimeout(async () => {
+            await watcher.close();
+
             throw new Error(`${file} timed out, should ${this.isNot ? "not exist" : "exist"}`);
         }, 4500);
 
         // Fail if the watcher throws a wobbly
         watcher.on("error", async (e) => {
+            await watcher.close();
+            
             throw e;
         });
 

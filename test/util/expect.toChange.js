@@ -18,8 +18,17 @@ expect.extend({
 
         // Fail if we don't see a change within a reasonable amount of time
         const timer = setTimeout(async () => {
+            await watcher.close();
+
             throw new Error(`File didn't change within timeout`);
         }, 4500);
+
+        // Fail if the watcher throws a wobbly
+        watcher.on("error", async (e) => {
+            await watcher.close();
+            
+            throw e;
+        });
 
         const result = await new Promise((resolve) => {
             watcher.on("change", async () => {
