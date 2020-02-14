@@ -16,20 +16,19 @@ expect.extend({
             disableGlobbing : true,
         });
 
-        return new Promise((resolve) => {
-            // Fail if we don't see a change within a reasonable amount of time
-            const timer = setTimeout(async () => {
-                await watcher.close();
+        // Fail if we don't see a change within a reasonable amount of time
+        const timer = setTimeout(async () => {
+            throw new Error(`File didn't change within timeout`);
+        }, 4500);
 
-                throw new Error(`File didn't change within timeout`);
-            }, 4500);
-
+        const result = await new Promise((resolve) => {
             watcher.on("change", async () => {
-                clearTimeout(timer);
-
-                await watcher.close();
-
                 const updated = await fs.readFile(file, "utf8");
+
+                // Not the change we were looking for :(
+                if(updated === initial) {
+                    return;
+                }
 
                 const difference = diff(
                     initial.trim(),
@@ -42,5 +41,11 @@ expect.extend({
                 resolve(toMatchSnapshot.call(this, difference, testName));
             });
         });
+
+        clearTimeout(timer);
+
+        await watcher.close();
+
+        return result;
     },
 });

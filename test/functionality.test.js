@@ -100,7 +100,6 @@ describe("functionality", () => {
             ],
             options : {
                 watching : true,
-                loglevel : "silly",
             },
         });
 
