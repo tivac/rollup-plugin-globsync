@@ -1,4 +1,5 @@
-# 🔎📂`rollup-plugin-globsync`
+🔎📂`rollup-plugin-globsync` ![Tests](https://github.com/tivac/rollup-plugin-globsync/workflows/Tests/badge.svg)
+==============================
 
 Rollup plugin to take a list of globs, copy them on the first build, and optionally watch for changes and sync those over afterwards.
 
@@ -22,7 +23,7 @@ export default {
             patterns : [
                 "**/*.jpg",
                 "!**/*.js",
-                "./except/this/one.js"
+                "./except/copy/this/one.js"
             ],
             dest : "./dist",
             options : {
