@@ -7,7 +7,7 @@ const { readDirDeepSync : read } = require("read-dir-deep");
 const { toMatchSnapshot } = require("jest-snapshot");
 
 expect.extend({
-    toMatchDirSnapshot(source) {
+    toMatchDirSnapshot(source, testName = "") {
         const files = read(source, { absolute : true });
 
         const contents = files.sort().map((file) => ({
@@ -17,7 +17,8 @@ expect.extend({
 
         return toMatchSnapshot.call(
             this,
-            contents
+            contents,
+            testName,
         );
     },
 });

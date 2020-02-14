@@ -8,8 +8,18 @@ const { toMatchSnapshot } = require("jest-snapshot");
 const diff = require("snapshot-diff");
 
 expect.extend({
-    async toChange(file, testName = "") {
+    async toChange(file, testName = "", options = false) {
         const initial = await fs.readFile(file, "utf8");
+
+        if(typeof testName === "object") {
+            options = testName;
+            testName = "";
+        }
+
+        const {
+            wait = 4500,
+            name = testName,
+        } = options;
 
         const watcher = chokidar.watch(file, {
             ignoreInitial   : true,
@@ -21,12 +31,12 @@ expect.extend({
             await watcher.close();
 
             throw new Error(`File didn't change within timeout`);
-        }, 4500);
+        }, wait);
 
         // Fail if the watcher throws a wobbly
         watcher.on("error", async (e) => {
             await watcher.close();
-            
+
             throw e;
         });
 
@@ -47,7 +57,7 @@ expect.extend({
                     },
                 );
 
-                resolve(toMatchSnapshot.call(this, difference, testName));
+                resolve(toMatchSnapshot.call(this, difference, name));
             });
         });
 

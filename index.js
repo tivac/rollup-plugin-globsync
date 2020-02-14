@@ -16,15 +16,19 @@ const stop = (name) => pretty(marky.stop(name).duration);
 
 const slash = (str) => str.replace(/\\/g, "/");
 
-module.exports = ({ patterns = [], dest = "./dist", options = false }) => {
+module.exports = (options) => {
     const {
+        globs = [],
+        dest = "./dist",
         dir = process.cwd(),
         clean = true,
         verbose = false,
         manifest = false,
         loglevel = "info",
         transform = false,
-        watching = false,
+
+        // Only intended for usage from within tests
+        _watching = false,
     } = options;
 
     const {
@@ -34,7 +38,7 @@ module.exports = ({ patterns = [], dest = "./dist", options = false }) => {
 
     log.level = verbose ? "verbose" : loglevel;
 
-    const watch = watching || Boolean(process.env.ROLLUP_WATCH);
+    const watch = _watching || Boolean(process.env.ROLLUP_WATCH);
 
     let runs = 0;
     let files;
@@ -44,11 +48,11 @@ module.exports = ({ patterns = [], dest = "./dist", options = false }) => {
 
     marky.mark("generating globs");
 
-    const globs = [
+    const patterns = [
         // The worst dir for a watcher to walk, yikes
         "!**/node_modules/**",
 
-        ...patterns
+        ...globs
             // Filter out falsey values
             .filter(Boolean)
             // flatten one level deep
@@ -63,11 +67,7 @@ module.exports = ({ patterns = [], dest = "./dist", options = false }) => {
             return files.get(file);
         }
 
-        let out = path.join(dest, file);
-
-        if(transform) {
-            out = transform(out);
-        }
+        const out = transform ? transform(file) : file;
 
         files.set(file, out);
 
@@ -79,7 +79,7 @@ module.exports = ({ patterns = [], dest = "./dist", options = false }) => {
 
         marky.mark(timer);
 
-        const tgt = transformed(item);
+        const tgt = path.join(dest, transformed(item));
 
         log.silly("copy", `Copying ${item}...`);
 
@@ -95,10 +95,10 @@ module.exports = ({ patterns = [], dest = "./dist", options = false }) => {
         const timer = `delete-${item}`;
 
         marky.mark(timer);
-        
+
         log.silly("remove", `Removing ${item}...`);
 
-        const tgt = transformed(item);
+        const tgt = path.join(dest, transformed(item));
 
         await del(slash(tgt));
 
@@ -107,7 +107,7 @@ module.exports = ({ patterns = [], dest = "./dist", options = false }) => {
         log.verbose("remove", `Deleted ${tgt} in ${stop(timer)}`);
     };
 
-    log.silly("config", `Globs:\n${JSON.stringify(globs, null, 4)}`);
+    log.silly("config", `Globs:\n${JSON.stringify(patterns, null, 4)}`);
     log.silly("config", `Generating globs took ${stop("generating globs")}`);
     log.silly("config", `Destination: ${dest}`);
     log.silly("config", `Options ${JSON.stringify({
@@ -117,7 +117,7 @@ module.exports = ({ patterns = [], dest = "./dist", options = false }) => {
         manifest,
         loglevel,
         transform,
-        watching,
+        _watching,
     }, null, 4)}`);
 
     return {
@@ -138,11 +138,12 @@ module.exports = ({ patterns = [], dest = "./dist", options = false }) => {
 
             // Use globby to walk the FS and find all files matching globs
             // Used for initial copy of files
-            const found = await globby(globs, { cwd : dir });
+            const found = await globby(patterns, { cwd : dir });
+
+            files = new Map();
 
             // Generate a map of files to their transformed values
-            files = new Map();
-            found.forEach((file) => transformed(file));
+            found.forEach(transformed);
 
             log.verbose("collect", `Collected ${files.size} files in ${stop("collecting")}`);
 
@@ -164,10 +165,11 @@ module.exports = ({ patterns = [], dest = "./dist", options = false }) => {
                 await Promise.all(
                     [ ...files.entries() ].map(([ input, output ]) => {
                         const src = path.join(dir, input);
+                        const tgt = path.join(dest, output);
 
-                        log.silly("copy", `${src} => ${output}`);
+                        log.silly("copy", `${src} => ${tgt}`);
 
-                        return cp(src, output);
+                        return cp(src, tgt);
                     })
                 );
 
@@ -184,7 +186,7 @@ module.exports = ({ patterns = [], dest = "./dist", options = false }) => {
 
             marky.mark("watcher setup");
 
-            watcher = chokidar.watch(globs, {
+            watcher = chokidar.watch(patterns, {
                 ignoreInitial : true,
                 cwd           : dir,
             });
@@ -213,7 +215,7 @@ module.exports = ({ patterns = [], dest = "./dist", options = false }) => {
                             paths.push(`${key}/${file}`);
                         });
                     });
-    
+
                     log.verbose("watch", `Watching ${paths.length} paths`);
                     log.silly("watch", JSON.stringify(paths, null, 4));
                     log.verbose("watch", `Set up watcher in ${stop("watcher setup")}`);
@@ -235,20 +237,13 @@ module.exports = ({ patterns = [], dest = "./dist", options = false }) => {
             return `export default new Map(${JSON.stringify([ ...files.entries() ])})`;
         },
 
-        async generateBundle() {
-            await Promise.all([
-                initialCopy,
-                watcherReady,
-            ]);
-        },
-
         buildEnd(error) {
             if(error || !assetsfile) {
                 return;
             }
 
             const output = { __proto__ : null };
-            
+
             files.forEach((out, src) => {
                 output[src] = out;
             });
@@ -258,6 +253,13 @@ module.exports = ({ patterns = [], dest = "./dist", options = false }) => {
                 source   : JSON.stringify(output, null, 4),
                 fileName : assetsfile,
             });
+        },
+
+        async generateBundle() {
+            await Promise.all([
+                initialCopy,
+                watcherReady,
+            ]);
         },
 
         // Only really intended to be used by tests
