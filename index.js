@@ -52,13 +52,7 @@ module.exports = ({ patterns = [], dest = "./dist", options = false }) => {
             // Filter out falsey values
             .filter(Boolean)
             // flatten one level deep
-            .reduce((acc, val) => acc.concat(val), [])
-            // make absolute paths relative so they match anything
-            .map((item) => (
-                path.isAbsolute(item) ?
-                    `./${slash(path.relative(dir, item))}` :
-                    item
-            )),
+            .reduce((acc, val) => acc.concat(val), []),
 
         // No inception, please
         `!./${slash(path.relative(dir, dest))}/**`,
