@@ -48,3 +48,5 @@ exports[`functionality should recopy changed files 1`] = `
 - file.txt
 + console.log(\\"Hello\\");"
 `;
+
+exports[`functionality should require passing an array of globs 1`] = `"Must provide { globs : [] } to rollup-plugin-globsync"`;

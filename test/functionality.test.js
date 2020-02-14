@@ -45,6 +45,10 @@ describe("functionality", () => {
         dir = false;
     });
 
+    it("should require passing an array of globs", async () => {
+        expect(() => plugin()).toThrowErrorMatchingSnapshot();
+    });
+
     it("should copy files when the build starts", async () => {
         const spec = specimen("basic");
 

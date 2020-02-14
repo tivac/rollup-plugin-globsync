@@ -16,9 +16,9 @@ const stop = (name) => pretty(marky.stop(name).duration);
 
 const slash = (str) => str.replace(/\\/g, "/");
 
-module.exports = (options) => {
+module.exports = (options = false) => {
     const {
-        globs = [],
+        globs,
         dest = "./dist",
         dir = process.cwd(),
         clean = true,
@@ -30,6 +30,10 @@ module.exports = (options) => {
         // Only intended for usage from within tests
         _watching = false,
     } = options;
+
+    if(!globs) {
+        throw new Error("Must provide { globs : [] } to rollup-plugin-globsync");
+    }
 
     const {
         module : assetsmodule = manifest,
@@ -125,6 +129,7 @@ module.exports = (options) => {
 
         async buildStart() {
             // Only want to run this setup once at buildStart
+            /* istanbul ignore next */
             if(runs++) {
                 return;
             }
