@@ -233,6 +233,8 @@ describe("functionality", () => {
         [ "manifest.module/transform", { manifest : { module : "manifest" }, transform }],
     ])("should provide manifest as a module (%s)", async (key, config) => {
         const spec = specimen("manifest");
+        
+        dir = temp();
 
         const bundle = await rollup({
             input : spec("/index.js"),
@@ -264,6 +266,8 @@ describe("functionality", () => {
         [ "file w/ transforms", { transform }],
     ])("should provide manifest as a %s", async (key, config) => {
         const spec = specimen("basic");
+
+        dir = temp();
 
         const bundle = await rollup({
             input : spec("/index.js"),

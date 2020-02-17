@@ -5,7 +5,6 @@ const path = require("path");
 const chokidar = require("chokidar");
 const cp = require("cp-file");
 const del = require("del");
-const globby = require("globby");
 
 const log = require("npmlog");
 const marky = require("marky");
@@ -19,16 +18,13 @@ const slash = (str) => str.replace(/\\/g, "/");
 module.exports = (options = false) => {
     const {
         globs,
+        clean = true,
         dest = "./dist",
         dir = process.cwd(),
-        clean = true,
-        verbose = false,
-        manifest = false,
         loglevel = "info",
+        manifest = false,
         transform = false,
-
-        // Only intended for usage from within tests
-        _watching = false,
+        verbose = false,
     } = options;
 
     if(!globs) {
@@ -42,12 +38,9 @@ module.exports = (options = false) => {
 
     log.level = verbose ? "verbose" : loglevel;
 
-    const watch = _watching || Boolean(process.env.ROLLUP_WATCH);
-
     let runs = 0;
     let files;
     let watcher;
-    let initialCopy;
     let watcherReady;
 
     marky.mark("generating globs");
@@ -60,10 +53,12 @@ module.exports = (options = false) => {
             // Filter out falsey values
             .filter(Boolean)
             // flatten one level deep
-            .reduce((acc, val) => acc.concat(val), []),
+            .reduce((acc, val) => acc.concat(val), [])
+            // No \ allowed
+            .map((glob) => slash(glob)),
 
         // No inception, please
-        `!./${slash(path.relative(dir, dest))}/**`,
+        `!${slash(dest)}/**`,
     ];
 
     const transformed = (file) => {
@@ -121,7 +116,6 @@ module.exports = (options = false) => {
         manifest,
         loglevel,
         transform,
-        _watching,
     }, null, 4)}`);
 
     return {
@@ -134,57 +128,14 @@ module.exports = (options = false) => {
                 return;
             }
 
-            // Just in case!
-            marky.clear();
-
-            log.silly("collect", `Collecting files...`);
-
-            marky.mark("collecting");
-
-            // Use globby to walk the FS and find all files matching globs
-            // Used for initial copy of files
-            const found = await globby(patterns, { cwd : dir });
-
             files = new Map();
 
-            // Generate a map of files to their transformed values
-            found.forEach(transformed);
+            if(clean) {
+                marky.mark("cleaning");
 
-            log.verbose("collect", `Collected ${files.size} files in ${stop("collecting")}`);
+                await del(slash(dest));
 
-            // Don't want to make rollup wait on this before bundling, so wrapped in an async IIFE
-            // and checked down below in generateBundle
-            initialCopy = (async function() {
-                if(clean) {
-                    marky.mark("cleaning");
-
-                    await del(slash(dest));
-
-                    log.verbose("clean", `Cleaning destination took ${stop("cleaning")}`);
-                }
-
-                log.silly("copy", "Initial copy starting...");
-
-                marky.mark("copying");
-
-                await Promise.all(
-                    [ ...files.entries() ].map(([ input, output ]) => {
-                        const src = path.join(dir, input);
-                        const tgt = path.join(dest, output);
-
-                        log.silly("copy", `${src} => ${tgt}`);
-
-                        return cp(src, tgt);
-                    })
-                );
-
-                log.verbose("copy", `Initial copy complete in ${stop("copying")}`);
-            }());
-
-            if(!watch) {
-                watcherReady = Promise.resolve();
-
-                return;
+                log.verbose("clean", `Cleaning destination took ${stop("cleaning")}`);
             }
 
             log.silly("watch", "Setting up watcher...");
@@ -192,8 +143,7 @@ module.exports = (options = false) => {
             marky.mark("watcher setup");
 
             watcher = chokidar.watch(patterns, {
-                ignoreInitial : true,
-                cwd           : dir,
+                cwd : dir,
             });
 
             // Added or changed files/dirs
@@ -211,7 +161,7 @@ module.exports = (options = false) => {
             });
 
             watcherReady = new Promise((resolve) => {
-                watcher.once("ready", () => {
+                watcher.on("ready", () => {
                     const watched = watcher.getWatched();
                     const paths = [];
 
@@ -221,6 +171,7 @@ module.exports = (options = false) => {
                         });
                     });
 
+                    log.verbose("copy", `Copied ${files.size} files`);
                     log.verbose("watch", `Watching ${paths.length} paths`);
                     log.silly("watch", JSON.stringify(paths, null, 4));
                     log.verbose("watch", `Set up watcher in ${stop("watcher setup")}`);
@@ -234,10 +185,12 @@ module.exports = (options = false) => {
             return importee === assetsmodule ? assetsmodule : undefined;
         },
 
-        load(id) {
+        async load(id) {
             if(id !== assetsmodule) {
                 return null;
             }
+
+            await watcherReady;
 
             return `export default new Map(${JSON.stringify([ ...files.entries() ])})`;
         },
@@ -261,10 +214,7 @@ module.exports = (options = false) => {
         },
 
         async generateBundle() {
-            await Promise.all([
-                initialCopy,
-                watcherReady,
-            ]);
+            await watcherReady;
         },
 
         // Only really intended to be used by tests
