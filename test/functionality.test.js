@@ -30,6 +30,22 @@ describe("functionality", () => {
     let dir;
     let instance;
 
+    // Helper function to ensure that the watcher gets closed after every test
+    // otherwise jest hangs :(
+    const run = async (input, config) => {
+        instance =  plugin(config);
+
+        const bundle = await rollup({
+            input,
+
+            plugins : [
+                instance,
+            ],
+        });
+
+        return bundle;
+    };
+
     beforeEach(() => {
         dir = temp();
     });
@@ -52,17 +68,11 @@ describe("functionality", () => {
     it("should copy files when the build starts", async () => {
         const spec = specimen("basic");
 
-        const bundle = await rollup({
-            input : spec("/index.js"),
-
-            plugins : [
-                plugin({
-                    dir   : spec(),
-                    dest  : dir("/dest"),
-                    globs : [
-                        "*.txt",
-                    ],
-                }),
+        const bundle = await run(spec("/index.js"), {
+            dir   : spec(),
+            dest  : dir("/dest"),
+            globs : [
+                "*.txt",
             ],
         });
 
@@ -80,20 +90,10 @@ describe("functionality", () => {
 
         process.chdir(dir());
 
-        instance = plugin({
+        const bundle = await run(dir("/index.js"), {
             dest  : dir("/dest"),
             globs : [
                 "*.txt",
-            ],
-
-            _watching : true,
-        });
-
-        const bundle = await rollup({
-            input : dir("/index.js"),
-
-            plugins : [
-                instance,
             ],
         });
 
@@ -117,20 +117,10 @@ describe("functionality", () => {
 
         process.chdir(dir());
 
-        instance = plugin({
+        await run(dir("/index.js"), {
             dest  : dir("/dest"),
             globs : [
                 "*.txt",
-            ],
-
-            _watching : true,
-        });
-
-        await rollup({
-            input : dir("/index.js"),
-
-            plugins : [
-                instance,
             ],
         });
 
@@ -146,20 +136,10 @@ describe("functionality", () => {
 
         process.chdir(dir());
 
-        instance = plugin({
+        const bundle = await run(dir("/index.js"), {
             dest  : dir("/dest"),
             globs : [
                 "*.txt",
-            ],
-
-            _watching : true,
-        });
-
-        const bundle = await rollup({
-            input : dir("/index.js"),
-
-            plugins : [
-                instance,
             ],
         });
 
@@ -179,19 +159,13 @@ describe("functionality", () => {
 
         const exists = expect(dir("/dest/file.transformed.txt")).toExist();
 
-        await rollup({
-            input : spec("/index.js"),
-
-            plugins : [
-                plugin({
-                    dir   : spec(),
-                    dest  : dir("/dest"),
-                    globs : [
-                        "*.txt",
-                    ],
-                    transform,
-                }),
+        await run(spec("/index.js"), {
+            dir   : spec(),
+            dest  : dir("/dest"),
+            globs : [
+                "*.txt",
             ],
+            transform,
         });
 
         await exists;
@@ -202,19 +176,12 @@ describe("functionality", () => {
 
         await cp(spec("file.txt"), dir("/dest/already-there.txt"));
 
-        const bundle = await rollup({
-            input : spec("/index.js"),
-
-            plugins : [
-                plugin({
-                    dir   : spec(),
-                    dest  : dir("/dest"),
-                    globs : [
-                        "*.txt",
-                    ],
-
-                    clean : false,
-                }),
+        const bundle = await run(spec("/index.js"), {
+            dir   : spec(),
+            dest  : dir("/dest"),
+            clean : false,
+            globs : [
+                "*.txt",
             ],
         });
 
@@ -236,20 +203,14 @@ describe("functionality", () => {
         
         dir = temp();
 
-        const bundle = await rollup({
-            input : spec("/index.js"),
-
-            plugins : [
-                plugin({
-                    dir   : spec(),
-                    dest  : dir("/dest"),
-                    globs : [
-                        "*.txt",
-                    ],
-
-                    ...config,
-                }),
+        const bundle = await run(spec("/index.js"), {
+            dir   : spec(),
+            dest  : dir("/dest"),
+            globs : [
+                "*.txt",
             ],
+
+            ...config,
         });
 
         const { output } = await bundle.generate({
@@ -261,6 +222,7 @@ describe("functionality", () => {
         expect(code).toMatchSnapshot();
     });
 
+    // it.only.each([
     it.each([
         [ "file", {}],
         [ "file w/ transforms", { transform }],
@@ -269,24 +231,18 @@ describe("functionality", () => {
 
         dir = temp();
 
-        const bundle = await rollup({
-            input : spec("/index.js"),
-
-            plugins : [
-                plugin({
-                    dir   : spec(),
-                    dest  : dir("/dest"),
-                    globs : [
-                        "*.txt",
-                    ],
-
-                    manifest : {
-                        file : "manifest.json",
-                    },
-
-                    ...config,
-                }),
+        const bundle = await run(spec("/index.js"), {
+            dir   : spec(),
+            dest  : dir("/dest"),
+            globs : [
+                "*.txt",
             ],
+
+            manifest : {
+                file : "manifest.json",
+            },
+
+            ...config,
         });
 
         // Manifest is written out when build finishes, so this has to happen
