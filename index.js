@@ -43,24 +43,6 @@ module.exports = (options = false) => {
     let watcher;
     let watcherReady;
 
-    marky.mark("generating globs");
-
-    const patterns = [
-        // The worst dir for a watcher to walk, yikes
-        "!**/node_modules/**",
-
-        ...globs
-            // Filter out falsey values
-            .filter(Boolean)
-            // flatten one level deep
-            .reduce((acc, val) => acc.concat(val), [])
-            // No \ allowed
-            .map((glob) => slash(glob)),
-
-        // No inception, please
-        `!${slash(dest)}/**`,
-    ];
-
     const transformed = (file) => {
         if(files.has(file)) {
             return files.get(file);
@@ -106,10 +88,25 @@ module.exports = (options = false) => {
         log.verbose("remove", `Deleted ${tgt} in ${stop(timer)}`);
     };
 
+    const patterns = [
+        // The worst dir for a watcher to walk, yikes
+        "!**/node_modules/**",
+
+        ...globs
+            // Filter out falsey values
+            .filter(Boolean)
+            // flatten one level deep
+            .reduce((acc, val) => acc.concat(val), [])
+            // No \ allowed
+            .map((glob) => slash(glob)),
+
+        // No inception, please
+        `!${slash(dest)}/**`,
+    ];
+
     log.silly("config", `Globs:\n${JSON.stringify(patterns, null, 4)}`);
-    log.silly("config", `Generating globs took ${stop("generating globs")}`);
-    log.silly("config", `Destination: ${dest}`);
     log.silly("config", `Options ${JSON.stringify({
+        dest,
         dir,
         clean,
         verbose,
@@ -171,9 +168,9 @@ module.exports = (options = false) => {
                         });
                     });
 
-                    log.verbose("copy", `Copied ${files.size} files`);
-                    log.verbose("watch", `Watching ${paths.length} paths`);
-                    log.silly("watch", JSON.stringify(paths, null, 4));
+                    log.verbose("watch", `Watching ${paths.length} paths, ${files.size} files`);
+                    log.silly("watch", `Paths (${paths.length}): ${JSON.stringify(paths, null, 4)}`);
+                    log.silly("watch", `Files (${files.size}): ${require("util").inspect(files)}`);
                     log.verbose("watch", `Set up watcher in ${stop("watcher setup")}`);
 
                     resolve();
@@ -195,10 +192,12 @@ module.exports = (options = false) => {
             return `export default new Map(${JSON.stringify([ ...files.entries() ])})`;
         },
 
-        buildEnd(error) {
+        async buildEnd(error) {
             if(error || !assetsfile) {
                 return;
             }
+
+            await watcherReady;
 
             const output = { __proto__ : null };
 
@@ -217,7 +216,7 @@ module.exports = (options = false) => {
             await watcherReady;
         },
 
-        // Only really intended to be used by tests
+        // Only intended to be used by tests, but still useful?
         async _stop() {
             await watcher.close();
 
