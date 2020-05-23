@@ -1,6 +1,25 @@
 import rollup from 'rollup'
 
-interface Options {
+interface GlobSyncOptions {
+
+  /**
+   * Array of glob patterns to use for finding files to copy.
+   */
+  readonly globs:  string | ReadonlyArray<string>
+
+  /**
+   * Array of glob patterns to use for finding files to copy.
+   *
+   * @deprecated use `globs`
+   */
+  readonly patterns?:  string | ReadonlyArray<string>
+
+  /**
+   * Directory to copy files into.
+   *
+   * @default './dist'
+   */
+  readonly dest: string
 
   /**
    * Define the base dir to watch from.
@@ -24,6 +43,7 @@ interface Options {
    */
   readonly transform?: (file: string) => string;
 
+
    /**
    * A string defining a package name for the manifest of files to be
    * copied/watched that you can import in your code.
@@ -45,33 +65,6 @@ interface Options {
    * @default 'info'
    */
   readonly loglevel?: 'silly' | 'verbose' | 'info' | 'silent'
-}
-
-interface GlobSyncOptions {
-
-  /**
-   * Array of glob patterns to use for finding files to copy.
-   */
-  readonly globs?:  string | ReadonlyArray<string>
-
-  /**
-   * Array of glob patterns to use for finding files to copy.
-   *
-   * @deprecated use `globs`
-   */
-  readonly patterns?:  string | ReadonlyArray<string>
-
-  /**
-   * Directory to copy files into.
-   *
-   * @default './dist'
-   */
-  readonly dest: string
-
-  /**
-   * The open/closr delimeters
-   */
-  readonly options?: Options
 
 }
 
