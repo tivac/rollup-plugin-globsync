@@ -28,7 +28,7 @@
     "read-dir-deep": "^7.0.1",
     "rollup": "^2.7.6",
     "snapshot-diff": "^0.8.0",
-    "tempy": "^0.6.0"
+    "tempy": "^0.7.1"
   },
   "keywords": [
     "rollup",
