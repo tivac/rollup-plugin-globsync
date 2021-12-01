@@ -16,7 +16,7 @@
     "cp-file": "^9.0.0",
     "del": "^6.0.0",
     "marky": "^1.2.1",
-    "npmlog": "^5.0.0",
+    "npmlog": "^6.0.0",
     "pretty-ms": "^7.0.1"
   },
   "devDependencies": {
