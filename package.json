@@ -17,7 +17,7 @@
     "del": "^6.0.0",
     "marky": "^1.2.1",
     "npmlog": "^6.0.0",
-    "pretty-ms": "^7.0.1"
+    "pretty-ms": "^8.0.0"
   },
   "devDependencies": {
     "@tivac/eslint-config": "^2.4.0",
