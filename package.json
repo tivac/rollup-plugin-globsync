@@ -13,7 +13,7 @@
   },
   "dependencies": {
     "chokidar": "^3.3.1",
-    "cp-file": "^9.0.0",
+    "cp-file": "^10.0.0",
     "del": "^6.0.0",
     "marky": "^1.2.1",
     "npmlog": "^6.0.0",
