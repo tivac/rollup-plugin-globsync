@@ -19,6 +19,7 @@ module.exports = (options = false) => {
     const {
         globs,
         clean = true,
+        clean_ignore = [],
         dest = "./dist",
         dir = process.cwd(),
         loglevel = "info",
@@ -109,6 +110,7 @@ module.exports = (options = false) => {
         dest,
         dir,
         clean,
+        clean_ignore,
         verbose,
         manifest,
         loglevel,
@@ -130,7 +132,7 @@ module.exports = (options = false) => {
             if(clean) {
                 marky.mark("cleaning");
 
-                await del(slash(dest));
+                await del(slash(dest), { ignore: clean_ignore });
 
                 log.verbose("clean", `Cleaning destination took ${stop("cleaning")}`);
             }
