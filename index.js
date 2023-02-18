@@ -214,7 +214,7 @@ module.exports = (options = false) => {
             });
 
             this.emitFile({
-                type.    : "asset",
+                type     : "asset",
                 source   : JSON.stringify(output, null, 4),
                 fileName : assetsfile,
             });
