@@ -42,6 +42,9 @@ jobs:
     
     - name: npm install
       run: npm ci
+
+    - name: Lint
+      run: npm run lint
     
     - name: Test
       if: matrix.os != 'ubuntu-latest' || matrix.node_version != '16'
