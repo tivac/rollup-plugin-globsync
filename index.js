@@ -19,7 +19,6 @@ module.exports = (options = false) => {
     const {
         globs,
         clean = true,
-        clean_globs = [],
         dest = "./dist",
         dir = process.cwd(),
         loglevel = "info",
@@ -94,10 +93,10 @@ module.exports = (options = false) => {
         "!**/node_modules/**",
 
         ...globs
+            // flatten one level deep
+            .flat()
             // Filter out falsey values
             .filter(Boolean)
-            // flatten one level deep
-            .reduce((acc, val) => acc.concat(val), [])
             // No \ allowed
             .map((glob) => slash(glob)),
 
@@ -110,7 +109,6 @@ module.exports = (options = false) => {
         dest,
         dir,
         clean,
-        clean_globs,
         verbose,
         manifest,
         loglevel,
@@ -132,13 +130,21 @@ module.exports = (options = false) => {
             if(clean) {
                 marky.mark("cleaning");
 
-                await del(clean_globs ? clean_globs
-                    // Filter out falsey values
-                    .filter(Boolean)
-                    // flatten one level deep
-                    .reduce((acc, val) => acc.concat(val), [])
-                    // No \ allowed
-                    .map((glob) => slash(glob)) : slash(dest));
+                let toClean = slash(dest);
+
+                if(Array.isArray(clean)) {
+                    toClean = clean
+                        // flatten one level deep
+                        .flat()
+                        // Filter out falsey values
+                        .filter(Boolean)
+                        // No \ allowed
+                        .map((glob) => slash(glob));
+                }
+
+                await del(toClean, {
+                    cwd : dest,
+                });
 
                 log.verbose("clean", `Cleaning destination took ${stop("cleaning")}`);
             }
