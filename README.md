@@ -77,6 +77,10 @@ Define the base dir to watch from. Defaults to `process.cwd()`.
 
 Whether or not to remove all files within `dist` when rollup starts up. Defaults to `true`.
 
+### `options.clean_globs`
+
+Array of glob patterns to use for finding files to clean. Negation via leading `!` is supported, as is re-inclusion after negation. Defaults to `dest`.
+
 ### `options.transform`
 
 A `(file) => file` function that allows for programatically changing the destination of files. Defaults to the identify function.
