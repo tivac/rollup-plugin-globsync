@@ -3,7 +3,6 @@
   "description": "Rollup plugin to copy globs & watch for changes",
   "author": "Pat Cavit <npm@patcavit.com>",
   "main": "index.js",
-  "types": "index.d.ts",
   "version": "2.1.0",
   "license": "MIT",
   "scripts": {
