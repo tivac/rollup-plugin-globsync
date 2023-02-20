@@ -2,39 +2,39 @@
 
 exports[`functionality should provide manifest as a file 1`] = `
 "{
-    \\"file.txt\\": \\"file.txt\\"
+    "file.txt": "file.txt"
 }"
 `;
 
 exports[`functionality should provide manifest as a file w/ transforms 1`] = `
 "{
-    \\"file.txt\\": \\"/file.transformed.txt\\"
+    "file.txt": "/file.transformed.txt"
 }"
 `;
 
 exports[`functionality should provide manifest as a module (manifest) 1`] = `
-"var manifest = new Map([[\\"file.txt\\",\\"file.txt\\"]]);
+"var manifest = new Map([["file.txt","file.txt"]]);
 
 console.log(manifest);
 "
 `;
 
 exports[`functionality should provide manifest as a module (manifest.module) 1`] = `
-"var manifest = new Map([[\\"file.txt\\",\\"file.txt\\"]]);
+"var manifest = new Map([["file.txt","file.txt"]]);
 
 console.log(manifest);
 "
 `;
 
 exports[`functionality should provide manifest as a module (manifest.module/transform) 1`] = `
-"var manifest = new Map([[\\"file.txt\\",\\"/file.transformed.txt\\"]]);
+"var manifest = new Map([["file.txt","/file.transformed.txt"]]);
 
 console.log(manifest);
 "
 `;
 
 exports[`functionality should provide manifest as a module (manifest/transform) 1`] = `
-"var manifest = new Map([[\\"file.txt\\",\\"/file.transformed.txt\\"]]);
+"var manifest = new Map([["file.txt","/file.transformed.txt"]]);
 
 console.log(manifest);
 "
@@ -46,7 +46,7 @@ exports[`functionality should recopy changed files 1`] = `
 + Second value
 
 - file.txt
-+ console.log(\\"Hello\\");"
++ console.log("Hello");"
 `;
 
 exports[`functionality should require passing an array of globs 1`] = `"Must provide { globs : [] } to rollup-plugin-globsync"`;
