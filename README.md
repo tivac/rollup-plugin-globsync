@@ -20,7 +20,7 @@ export default {
     // ...
     plugins : [
         globsync({
-            patterns : [
+            globs : [
                 "**/*.jpg",
                 "!**/*.js",
                 "./except/copy/this/one.js"
@@ -61,7 +61,7 @@ rollup.watch({
 
 ## Configuration
 
-### `patterns`
+### `globs`
 
 Array of glob patterns to use for finding files to copy. Negation via leading `!` is supported, as is re-inclusion after negation. Automatically negates `**/node_modules/**` and the `dest` directory.
 
@@ -69,31 +69,27 @@ Array of glob patterns to use for finding files to copy. Negation via leading `!
 
 Directory to copy files into. Defaults to `./dist`.
 
-### `options.dir`
+### `dir`
 
 Define the base dir to watch from. Defaults to `process.cwd()`.
 
-### `options.clean`
+### `clean`
 
-Whether or not to remove all files within `dist` when rollup starts up. Defaults to `true`.
+Whether or not to remove all files within `dist` when rollup starts up. Defaults to `true`. Supports passing an array of globs to only clean certain files, negation via leading `!` is supported, as is re-inclusion after negation.
 
-### `options.clean_globs`
-
-Array of glob patterns to use for finding files to clean. Negation via leading `!` is supported, as is re-inclusion after negation. Defaults to `dest`.
-
-### `options.transform`
+### `transform`
 
 A `(file) => file` function that allows for programatically changing the destination of files. Defaults to the identify function.
 
-### `options.manifest`
+### `manifest`
 
 A `string` defining a package name for the manifest of files to be copied/watched that you can `import` in your code, in case your bundled code cares about the static files that are being copied alongside it. Defaults to `false`.
 
-### `options.verbose`
+### `verbose`
 
 A shorthand to enable verbose logging. Defaults to `false`. Overrides `level` option if set.
 
-### `options.loglevel`
+### `loglevel`
 
 Specify the exact level to log at. Defaults to `info`.
 

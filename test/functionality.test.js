@@ -193,6 +193,31 @@ describe("functionality", () => {
         await expect(dir("/dest/already-there.txt")).toExist();
     });
 
+    it("should support cleaning via globs", async () => {
+        const spec = specimen("basic");
+
+        await cp(spec("file.txt"), dir("/dest/already-there.txt"));
+
+        const bundle = await run(spec("/index.js"), {
+            dir   : spec(),
+            dest  : dir("/dest"),
+            clean : [
+                "file.*",
+            ],
+            globs : [
+                "*.txt",
+            ],
+        });
+
+        // Wait until the initial copy is complete
+        await bundle.generate({
+            format : "esm",
+        });
+
+        await expect(dir("/dest/file.txt")).not.toExist();
+        await expect(dir("/dest/already-there.txt")).toExist();
+    });
+
     it.each([
         [ "manifest", { manifest : "manifest" }],
         [ "manifest/transform", { manifest : "manifest", transform }],
@@ -222,7 +247,6 @@ describe("functionality", () => {
         expect(code).toMatchSnapshot();
     });
 
-    // it.only.each([
     it.each([
         [ "file", {}],
         [ "file w/ transforms", { transform }],
