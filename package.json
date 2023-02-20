@@ -28,7 +28,7 @@
     "jest": "^28.0.3",
     "read-dir-deep": "^7.0.1",
     "rollup": "^3.17.1",
-    "snapshot-diff": "^0.9.0",
+    "snapshot-diff": "^0.10.0",
     "tempy": "^1.0.0"
   },
   "peerDependencies": {
